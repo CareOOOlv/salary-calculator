@@ -10,7 +10,6 @@ import { fmt } from '@/calc'
 import { DEDUCTION_ITEMS, INCOME_FIELDS, HOUSING_FUND_RATE_OPTIONS } from '@/constants'
 import type { EmployeeInput, EmployeeResult } from '@/types'
 
-import { Lock } from 'lucide-react'
 
 interface EmployeeCardProps {
   input: EmployeeInput
@@ -19,11 +18,9 @@ interface EmployeeCardProps {
   onUpdateHousingFund: (field: 'enableHousingFund' | 'housingFundSameAsSocial' | 'housingFundBase' | 'housingFundRate', value: string) => void
   onToggleDeduction: (itemKey: string) => void
   onRemove: () => void
-  canUseHousingFund: boolean
-  onPaywallRequest: () => void
 }
 
-export function EmployeeCard({ input, result, onUpdate, onUpdateHousingFund, onToggleDeduction, onRemove, canUseHousingFund, onPaywallRequest }: EmployeeCardProps) {
+export function EmployeeCard({ input, result, onUpdate, onUpdateHousingFund, onToggleDeduction, onRemove }: EmployeeCardProps) {
   return (
     <Card className="shadow-md border-slate-200">
       <CardHeader className="pb-3 pt-4 px-5">
@@ -106,23 +103,13 @@ export function EmployeeCard({ input, result, onUpdate, onUpdateHousingFund, onT
           <div className="flex items-center gap-2">
             <Home className="w-4 h-4 text-orange-600" />
             <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">住房公积金</Label>
-            {canUseHousingFund ? (
-              <Checkbox
-                checked={!!input.enableHousingFund}
-                onCheckedChange={(checked) => onUpdateHousingFund('enableHousingFund', checked ? 'true' : '')}
-                className="h-4 w-4"
-              />
-            ) : (
-              <button
-                onClick={onPaywallRequest}
-                className="flex items-center gap-1 text-xs text-slate-400 hover:text-amber-500 cursor-pointer ml-1"
-              >
-                <Lock className="w-3 h-3" />
-                <span className="underline">升级解锁</span>
-              </button>
-            )}
+            <Checkbox
+              checked={!!input.enableHousingFund}
+              onCheckedChange={(checked) => onUpdateHousingFund('enableHousingFund', checked ? 'true' : '')}
+              className="h-4 w-4"
+            />
           </div>
-          {canUseHousingFund && input.enableHousingFund && (
+          {input.enableHousingFund && (
             <div className="space-y-2 pl-1">
               <div className="flex items-center gap-2">
                 <Checkbox
@@ -157,9 +144,6 @@ export function EmployeeCard({ input, result, onUpdate, onUpdateHousingFund, onT
                 </select>
               </div>
             </div>
-          )}
-          {!canUseHousingFund && (
-            <p className="text-xs text-slate-400 pl-1">公积金计算为基础版功能，升级后可勾选启用</p>
           )}
         </div>
 
