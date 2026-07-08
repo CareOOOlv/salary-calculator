@@ -46,7 +46,7 @@ export function EmployeeCard({ input, result, onUpdate, onToggleDeduction, onRem
         {/* 收入项 */}
         <div className="space-y-2">
           <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">收入项目</Label>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {INCOME_FIELDS.map(([key, label]) => (
               <div key={key}>
                 <Label className="text-xs text-slate-500">{label}</Label>
@@ -107,7 +107,7 @@ export function EmployeeCard({ input, result, onUpdate, onToggleDeduction, onRem
               </Badge>
             )}
           </div>
-          <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1.5">
             {DEDUCTION_ITEMS.map((item) => (
               <div key={item.key} className="flex items-center gap-2">
                 <Checkbox

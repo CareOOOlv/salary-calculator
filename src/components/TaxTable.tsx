@@ -25,11 +25,11 @@ export function TaxTable({ results }: TaxTableProps) {
           个税计算明细
         </CardTitle>
       </CardHeader>
-      <CardContent className="overflow-x-auto">
-        <Table>
+      <CardContent className="overflow-x-auto -mx-5 px-5 sm:mx-0 sm:px-0">
+        <Table className="responsive-table min-w-[600px]">
           <TableHeader>
             <TableRow className="bg-slate-50">
-              <TableHead className="text-xs font-semibold whitespace-nowrap">姓名</TableHead>
+              <TableHead className="text-xs font-semibold whitespace-nowrap sticky-col-header bg-slate-50">姓名</TableHead>
               <TableHead className="text-xs font-semibold text-right whitespace-nowrap">应发工资</TableHead>
               <TableHead className="text-xs font-semibold text-right whitespace-nowrap">减：起征点</TableHead>
               <TableHead className="text-xs font-semibold text-right whitespace-nowrap">减：个人社保</TableHead>
@@ -43,7 +43,7 @@ export function TaxTable({ results }: TaxTableProps) {
           <TableBody>
             {results.map((r) => (
               <TableRow key={r.id}>
-                <TableCell className="font-semibold text-sm">{r.name}</TableCell>
+                <TableCell className="font-semibold text-sm sticky-col bg-white">{r.name}</TableCell>
                 <TableCell className="text-right font-mono text-sm">{fmt(r.grossSalary)}</TableCell>
                 <TableCell className="text-right font-mono text-sm text-slate-400">- {fmt(TAX_THRESHOLD)}</TableCell>
                 <TableCell className="text-right font-mono text-sm text-slate-400">- {fmt(r.personalSocialTotal)}</TableCell>

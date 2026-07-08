@@ -26,11 +26,11 @@ export function SalaryTable({ results }: SalaryTableProps) {
           工资明细汇总表
         </CardTitle>
       </CardHeader>
-      <CardContent className="overflow-x-auto">
-        <Table>
+      <CardContent className="overflow-x-auto -mx-5 px-5 sm:mx-0 sm:px-0">
+        <Table className="responsive-table min-w-[800px]">
           <TableHeader>
             <TableRow className="bg-slate-50">
-              <TableHead className="text-xs font-semibold whitespace-nowrap">姓名</TableHead>
+              <TableHead className="text-xs font-semibold whitespace-nowrap sticky-col-header bg-slate-50">姓名</TableHead>
               <TableHead className="text-xs font-semibold text-right whitespace-nowrap">基本工资</TableHead>
               <TableHead className="text-xs font-semibold text-right whitespace-nowrap">岗位补贴</TableHead>
               <TableHead className="text-xs font-semibold text-right whitespace-nowrap">通迅费</TableHead>
@@ -51,7 +51,7 @@ export function SalaryTable({ results }: SalaryTableProps) {
           <TableBody>
             {results.map((r) => (
               <TableRow key={r.id}>
-                <TableCell className="font-semibold text-sm">{r.name}</TableCell>
+                <TableCell className="font-semibold text-sm sticky-col bg-white">{r.name}</TableCell>
                 <TableCell className="text-right font-mono text-sm">{fmt(r.baseSalary)}</TableCell>
                 <TableCell className="text-right font-mono text-sm">{fmt(r.positionAllowance)}</TableCell>
                 <TableCell className="text-right font-mono text-sm">{fmt(r.communication)}</TableCell>
@@ -70,7 +70,7 @@ export function SalaryTable({ results }: SalaryTableProps) {
               </TableRow>
             ))}
             <TableRow className="bg-slate-100 font-bold">
-              <TableCell className="text-sm">合计</TableCell>
+              <TableCell className="text-sm sticky-col bg-slate-100">合计</TableCell>
               <TableCell className="text-right font-mono text-sm">{fmt(sum('baseSalary'))}</TableCell>
               <TableCell className="text-right font-mono text-sm">{fmt(sum('positionAllowance'))}</TableCell>
               <TableCell className="text-right font-mono text-sm">{fmt(sum('communication'))}</TableCell>

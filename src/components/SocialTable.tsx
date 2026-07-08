@@ -28,11 +28,11 @@ export function SocialTable({ results, employees }: SocialTableProps) {
           社保缴费明细
         </CardTitle>
       </CardHeader>
-      <CardContent className="overflow-x-auto">
-        <Table>
+      <CardContent className="overflow-x-auto -mx-5 px-5 sm:mx-0 sm:px-0">
+        <Table className="responsive-table min-w-[800px]">
           <TableHeader>
             <TableRow className="bg-slate-50">
-              <TableHead className="text-xs font-semibold whitespace-nowrap">姓名</TableHead>
+              <TableHead className="text-xs font-semibold whitespace-nowrap sticky-col-header bg-slate-50">姓名</TableHead>
               <TableHead className="text-xs font-semibold text-right whitespace-nowrap">缴费基数</TableHead>
               <TableHead className="text-xs font-semibold text-right whitespace-nowrap text-blue-600">企业养老{((COMPANY_RATES.pension) * 100).toFixed(0)}%</TableHead>
               <TableHead className="text-xs font-semibold text-right whitespace-nowrap text-blue-600">企业医疗{(COMPANY_RATES.medical * 100).toFixed(1)}%</TableHead>
@@ -49,7 +49,7 @@ export function SocialTable({ results, employees }: SocialTableProps) {
           <TableBody>
             {results.map((r, i) => (
               <TableRow key={r.id}>
-                <TableCell className="font-semibold text-sm">{r.name}</TableCell>
+                <TableCell className="font-semibold text-sm sticky-col bg-white">{r.name}</TableCell>
                 <TableCell className="text-right font-mono text-sm">{fmt(parseFloat(employees[i].input.socialBase) || 0)}</TableCell>
                 <TableCell className="text-right font-mono text-sm">{fmt(r.companyPension)}</TableCell>
                 <TableCell className="text-right font-mono text-sm">{fmt(r.companyMedical)}</TableCell>
@@ -64,7 +64,7 @@ export function SocialTable({ results, employees }: SocialTableProps) {
               </TableRow>
             ))}
             <TableRow className="bg-slate-100 font-bold">
-              <TableCell className="text-sm">合计</TableCell>
+              <TableCell className="text-sm sticky-col bg-slate-100">合计</TableCell>
               <TableCell className="text-right font-mono text-sm">{fmt(results.reduce((s, _r, i) => s + (parseFloat(employees[i].input.socialBase) || 0), 0))}</TableCell>
               <TableCell className="text-right font-mono text-sm">{fmt(sum('companyPension'))}</TableCell>
               <TableCell className="text-right font-mono text-sm">{fmt(sum('companyMedical'))}</TableCell>
