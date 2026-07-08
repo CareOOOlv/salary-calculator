@@ -24,6 +24,10 @@ export interface EmployeeInput {
   deductionItems: DeductionItems
   seriousIllnessAmount: string
   cashSubsidy: string
+  enableHousingFund: boolean
+  housingFundSameAsSocial: boolean
+  housingFundBase: string
+  housingFundRate: string // 存储百分比数字，如 "12"
 }
 
 export interface EmployeeData {
@@ -54,6 +58,8 @@ export interface EmployeeResult {
   companyUnemployment: number
   companyInjury: number
   companySocialTotal: number
+  personalHousingFund: number
+  companyHousingFund: number
   specialDeductionTotal: number
   taxableIncome: number
   taxRate: number

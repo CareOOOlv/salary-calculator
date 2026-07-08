@@ -15,6 +15,18 @@ export const PERSONAL_RATES = {
   unemployment: 0.005,
 }
 
+// 公积金比例选项（企业和个人同比例）
+export const HOUSING_FUND_RATE_OPTIONS = [
+  { value: '5', label: '5%' },
+  { value: '6', label: '6%' },
+  { value: '7', label: '7%' },
+  { value: '8', label: '8%' },
+  { value: '9', label: '9%' },
+  { value: '10', label: '10%' },
+  { value: '11', label: '11%' },
+  { value: '12', label: '12%' },
+]
+
 export const DEDUCTION_ITEMS: DeductionItemConfig[] = [
   { key: 'childEducation', label: '子女教育', amount: 2000, unit: '元/月/孩' },
   { key: 'continuingEducation', label: '继续教育', amount: 400, unit: '元/月' },

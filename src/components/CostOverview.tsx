@@ -13,11 +13,18 @@ export function CostOverview({ results, employeeCount }: CostOverviewProps) {
 
   const totalNetSalary = sum('netSalary')
   const totalCompanySocial = sum('companySocialTotal')
+  const totalCompanyHousingFund = sum('companyHousingFund')
   const totalCashSubsidy = sum('cashSubsidy')
-  const totalLaborCost = totalNetSalary + totalCompanySocial + totalCashSubsidy
+  const totalLaborCost = totalNetSalary + totalCompanySocial + totalCompanyHousingFund + totalCashSubsidy
   const avgCost = results.length > 0 ? totalLaborCost / results.length : 0
   const totalTax = sum('tax')
   const totalPersonalSocial = sum('personalSocialTotal')
+  const totalPersonalHousingFund = sum('personalHousingFund')
+
+  const hasAnyHousingFund = results.some(r => r.personalHousingFund > 0)
+
+  // 根据是否有公积金调整 grid 列数
+  const gridCols = hasAnyHousingFund ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-8' : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-7'
 
   return (
     <Card className="shadow-md border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50">
@@ -29,7 +36,7 @@ export function CostOverview({ results, employeeCount }: CostOverviewProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="px-5 pb-5">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
+        <div className={`grid ${gridCols} gap-3`}>
           <div className="bg-white rounded-lg p-3 shadow-sm text-center">
             <p className="text-xs text-slate-500 mb-1">实发工资总额</p>
             <p className="text-base font-bold font-mono text-emerald-700">¥{fmt(totalNetSalary)}</p>
@@ -38,6 +45,12 @@ export function CostOverview({ results, employeeCount }: CostOverviewProps) {
             <p className="text-xs text-slate-500 mb-1">企业社保总额</p>
             <p className="text-base font-bold font-mono text-blue-700">¥{fmt(totalCompanySocial)}</p>
           </div>
+          {hasAnyHousingFund && (
+            <div className="bg-white rounded-lg p-3 shadow-sm text-center">
+              <p className="text-xs text-slate-500 mb-1">企业公积金总额</p>
+              <p className="text-base font-bold font-mono text-orange-700">¥{fmt(totalCompanyHousingFund)}</p>
+            </div>
+          )}
           <div className="bg-white rounded-lg p-3 shadow-sm text-center">
             <p className="text-xs text-slate-500 mb-1">代扣个税总额</p>
             <p className="text-base font-bold font-mono text-amber-700">¥{fmt(totalTax)}</p>
@@ -46,6 +59,12 @@ export function CostOverview({ results, employeeCount }: CostOverviewProps) {
             <p className="text-xs text-slate-500 mb-1">个人社保总额</p>
             <p className="text-base font-bold font-mono text-indigo-700">¥{fmt(totalPersonalSocial)}</p>
           </div>
+          {hasAnyHousingFund && (
+            <div className="bg-white rounded-lg p-3 shadow-sm text-center">
+              <p className="text-xs text-slate-500 mb-1">个人公积金总额</p>
+              <p className="text-base font-bold font-mono text-orange-500">¥{fmt(totalPersonalHousingFund)}</p>
+            </div>
+          )}
           <div className="bg-white rounded-lg p-3 shadow-sm text-center">
             <p className="text-xs text-slate-500 mb-1">现金补贴总额</p>
             <p className="text-base font-bold font-mono text-purple-700">¥{fmt(totalCashSubsidy)}</p>
@@ -61,7 +80,9 @@ export function CostOverview({ results, employeeCount }: CostOverviewProps) {
         </div>
         <div className="mt-3 pt-3 border-t border-blue-200">
           <p className="text-xs text-slate-500">
-            总用工成本 = 实发工资 ¥{fmt(totalNetSalary)} + 企业社保 ¥{fmt(totalCompanySocial)} + 现金补贴 ¥{fmt(totalCashSubsidy)} = <span className="font-bold text-blue-700">¥{fmt(totalLaborCost)}</span>
+            总用工成本 = 实发工资 ¥{fmt(totalNetSalary)} + 企业社保 ¥{fmt(totalCompanySocial)}
+            {totalCompanyHousingFund > 0 && ` + 企业公积金 ¥${fmt(totalCompanyHousingFund)}`}
+            + 现金补贴 ¥{fmt(totalCashSubsidy)} = <span className="font-bold text-blue-700">¥{fmt(totalLaborCost)}</span>
           </p>
         </div>
       </CardContent>

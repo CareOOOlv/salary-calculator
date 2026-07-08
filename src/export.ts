@@ -36,8 +36,8 @@ export function exportExcel(results: EmployeeResult[], yearMonth: string, employ
       fmtRaw(r.transport), fmtRaw(r.meal), fmtRaw(r.performance), fmtRaw(r.attendance),
       fmtRaw(r.otherDeduction), fmtRaw(r.grossSalary),
       fmtRaw(r.personalPension), fmtRaw(r.personalMedical), fmtRaw(r.personalUnemployment),
-      0, 0, fmtRaw(r.personalSocialTotal),
-      fmtRaw(r.grossSalary), TAX_THRESHOLD, fmtRaw(r.personalSocialTotal), fmtRaw(r.specialDeductionTotal), 0,
+      0, fmtRaw(r.personalHousingFund), fmtRaw(r.personalSocialTotal + r.personalHousingFund),
+      fmtRaw(r.grossSalary), TAX_THRESHOLD, fmtRaw(r.personalSocialTotal + r.personalHousingFund), fmtRaw(r.specialDeductionTotal), 0,
       fmtRaw(r.taxableIncome), r.taxRate, fmtRaw(r.quickDeduction), fmtRaw(r.tax),
       0, fmtRaw(r.monthlyTax),
       fmtRaw(r.netSalary), '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''
@@ -50,8 +50,8 @@ export function exportExcel(results: EmployeeResult[], yearMonth: string, employ
     fmtRaw(sum('transport')), fmtRaw(sum('meal')), fmtRaw(sum('performance')), fmtRaw(sum('attendance')),
     fmtRaw(sum('otherDeduction')), fmtRaw(sum('grossSalary')),
     fmtRaw(sum('personalPension')), fmtRaw(sum('personalMedical')), fmtRaw(sum('personalUnemployment')),
-    0, 0, fmtRaw(sum('personalSocialTotal')),
-    fmtRaw(sum('grossSalary')), TAX_THRESHOLD * n, fmtRaw(sum('personalSocialTotal')), fmtRaw(sum('specialDeductionTotal')), 0,
+    0, fmtRaw(sum('personalHousingFund')), fmtRaw(sum('personalSocialTotal') + sum('personalHousingFund')),
+    fmtRaw(sum('grossSalary')), TAX_THRESHOLD * n, fmtRaw(sum('personalSocialTotal') + sum('personalHousingFund')), fmtRaw(sum('specialDeductionTotal')), 0,
     fmtRaw(sum('taxableIncome')), '', 0, fmtRaw(sum('tax')),
     0, fmtRaw(sum('monthlyTax')),
     fmtRaw(sum('netSalary')), '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''
@@ -116,32 +116,35 @@ export function exportExcel(results: EmployeeResult[], yearMonth: string, employ
     fmtRaw(sum('specialDeductionTotal')), '', '', '', '', '', ''
   ])
 
-  // 社保缴费明细
+  // 社保公积金缴费明细
   const socStart = dedStart + n + 7
   wsData.push([])
   wsData.push([])
-  wsData.push([`${yearMonth}社保缴费明细`, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''])
+  wsData.push([`${yearMonth}社保公积金缴费明细`, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''])
   wsData.push([
-    '序号', '姓名', '缴费基数',
+    '序号', '姓名', '社保基数',
     '企业部分', '', '', '', '',
-    '企业部分社保扣除', '', '',
+    '企业社保合计', '企业公积金',
     '个人部分', '', '', '',
-    '企业+个人扣除合计',
+    '个人社保合计', '个人公积金',
+    '企业+个人合计',
     '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''
   ])
   wsData.push([
     '', '', '',
     '养老保险', '医疗保险', '失业保险', '工伤保险', '',
-    '', '', '',
-    '养老保险', '医疗保险', '失业保险', '个人社保',
+    '', '',
+    '养老保险', '医疗保险', '失业保险', '',
+    '', '',
     '',
     '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''
   ])
   wsData.push([
     '', '', '',
     COMPANY_RATES.pension, COMPANY_RATES.medical, COMPANY_RATES.unemployment, COMPANY_RATES.injury, '',
-    '', '', '',
+    '', '',
     PERSONAL_RATES.pension, PERSONAL_RATES.medical, PERSONAL_RATES.unemployment, '',
+    '', '',
     '',
     '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''
   ])
@@ -150,10 +153,10 @@ export function exportExcel(results: EmployeeResult[], yearMonth: string, employ
     wsData.push([
       i + 1, r.name, fmtRaw(parseFloat(employees[i].input.socialBase) || 0),
       fmtRaw(r.companyPension), fmtRaw(r.companyMedical), fmtRaw(r.companyUnemployment), fmtRaw(r.companyInjury),
-      fmtRaw(r.companySocialTotal), '', '',
+      fmtRaw(r.companySocialTotal), fmtRaw(r.companyHousingFund),
       fmtRaw(r.personalPension), fmtRaw(r.personalMedical), fmtRaw(r.personalUnemployment),
-      fmtRaw(r.personalSocialTotal),
-      fmtRaw(r.companySocialTotal + r.personalSocialTotal),
+      fmtRaw(r.personalSocialTotal), fmtRaw(r.personalHousingFund),
+      fmtRaw(r.companySocialTotal + r.companyHousingFund + r.personalSocialTotal + r.personalHousingFund),
       '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''
     ])
   })
@@ -190,10 +193,13 @@ export function exportExcel(results: EmployeeResult[], yearMonth: string, employ
     { s: { r: socStart + 1, c: 0 }, e: { r: socStart + 3, c: 0 } },
     { s: { r: socStart + 1, c: 1 }, e: { r: socStart + 3, c: 1 } },
     { s: { r: socStart + 1, c: 2 }, e: { r: socStart + 3, c: 2 } },
-    { s: { r: socStart + 1, c: 3 }, e: { r: socStart + 1, c: 6 } },
-    { s: { r: socStart + 1, c: 7 }, e: { r: socStart + 3, c: 7 } },
-    { s: { r: socStart + 1, c: 11 }, e: { r: socStart + 1, c: 14 } },
-    { s: { r: socStart + 1, c: 15 }, e: { r: socStart + 3, c: 15 } },
+    { s: { r: socStart + 1, c: 3 }, e: { r: socStart + 1, c: 7 } },  // 企业部分合并
+    { s: { r: socStart + 1, c: 8 }, e: { r: socStart + 3, c: 8 } },  // 企业社保合计
+    { s: { r: socStart + 1, c: 9 }, e: { r: socStart + 3, c: 9 } },  // 企业公积金
+    { s: { r: socStart + 1, c: 10 }, e: { r: socStart + 1, c: 13 } }, // 个人部分合并
+    { s: { r: socStart + 1, c: 14 }, e: { r: socStart + 3, c: 14 } }, // 个人社保合计
+    { s: { r: socStart + 1, c: 15 }, e: { r: socStart + 3, c: 15 } }, // 个人公积金
+    { s: { r: socStart + 1, c: 16 }, e: { r: socStart + 3, c: 16 } }, // 企业+个人合计
   ]
 
   const colWidths: { [key: number]: number } = {

@@ -21,6 +21,10 @@ export function getDefaultInput(): EmployeeInput {
     deductionItems: {},
     seriousIllnessAmount: '',
     cashSubsidy: '',
+    enableHousingFund: false,
+    housingFundSameAsSocial: true,
+    housingFundBase: '',
+    housingFundRate: '12',
   }
 }
 
@@ -76,10 +80,19 @@ export function calcEmployee(data: EmployeeData): EmployeeResult {
   const companyInjury = Math.round(socialBase * COMPANY_RATES.injury * 100) / 100
   const companySocialTotal = Math.round((companyPension + companyMedical + companyUnemployment + companyInjury) * 100) / 100
 
-  const taxableIncome = Math.max(0, grossSalary - TAX_THRESHOLD - personalSocialTotal - specialDeductionTotal)
+  // 公积金计算
+  const housingFundRate = parseFloat(input.housingFundRate) / 100 || 0.12
+  const housingFundBase = input.enableHousingFund
+    ? (input.housingFundSameAsSocial ? socialBase : (parseFloat(input.housingFundBase) || 0))
+    : 0
+  const personalHousingFund = input.enableHousingFund ? Math.round(housingFundBase * housingFundRate * 100) / 100 : 0
+  const companyHousingFund = input.enableHousingFund ? Math.round(housingFundBase * housingFundRate * 100) / 100 : 0
+
+  // 个税计算：公积金个人部分也从应纳税所得额中扣除
+  const taxableIncome = Math.max(0, grossSalary - TAX_THRESHOLD - personalSocialTotal - personalHousingFund - specialDeductionTotal)
   const { tax, rate: taxRate, quickDeduction } = calcTax(taxableIncome)
   const monthlyTax = Math.round(tax * 100) / 100 // 月度应扣个税
-  const netSalary = Math.round((grossSalary - personalSocialTotal - monthlyTax) * 100) / 100
+  const netSalary = Math.round((grossSalary - personalSocialTotal - personalHousingFund - monthlyTax) * 100) / 100
   const totalIncome = Math.round((netSalary + cashSubsidy) * 100) / 100
 
   return {
@@ -90,6 +103,7 @@ export function calcEmployee(data: EmployeeData): EmployeeResult {
     cashSubsidy, totalIncome,
     personalPension, personalMedical, personalUnemployment, personalSocialTotal,
     companyPension, companyMedical, companyUnemployment, companyInjury, companySocialTotal,
+    personalHousingFund, companyHousingFund,
     specialDeductionTotal,
     taxableIncome: Math.round(taxableIncome * 100) / 100,
     taxRate, quickDeduction,

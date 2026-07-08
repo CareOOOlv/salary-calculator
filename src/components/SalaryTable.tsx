@@ -42,6 +42,7 @@ export function SalaryTable({ results }: SalaryTableProps) {
               <TableHead className="text-xs font-semibold text-right whitespace-nowrap bg-blue-50">应发工资</TableHead>
               <TableHead className="text-xs font-semibold text-right whitespace-nowrap text-purple-600">专项扣除</TableHead>
               <TableHead className="text-xs font-semibold text-right whitespace-nowrap text-red-600">个人社保</TableHead>
+              <TableHead className="text-xs font-semibold text-right whitespace-nowrap text-orange-600">个人公积金</TableHead>
               <TableHead className="text-xs font-semibold text-right whitespace-nowrap text-amber-600">个税</TableHead>
               <TableHead className="text-xs font-semibold text-right whitespace-nowrap bg-emerald-50">实发工资</TableHead>
               <TableHead className="text-xs font-semibold text-right whitespace-nowrap bg-emerald-50 text-emerald-600">现金补贴</TableHead>
@@ -63,6 +64,7 @@ export function SalaryTable({ results }: SalaryTableProps) {
                 <TableCell className="text-right font-mono text-sm font-semibold bg-blue-50/50">{fmt(r.grossSalary)}</TableCell>
                 <TableCell className="text-right font-mono text-sm text-purple-600">{fmt(r.specialDeductionTotal)}</TableCell>
                 <TableCell className="text-right font-mono text-sm text-red-600">{fmt(r.personalSocialTotal)}</TableCell>
+                <TableCell className="text-right font-mono text-sm text-orange-600">{r.personalHousingFund > 0 ? fmt(r.personalHousingFund) : '-'}</TableCell>
                 <TableCell className="text-right font-mono text-sm text-amber-600">{fmt(r.tax)}</TableCell>
                 <TableCell className="text-right font-mono text-sm font-semibold bg-emerald-50/50">{fmt(r.netSalary)}</TableCell>
                 <TableCell className="text-right font-mono text-sm text-emerald-600">{fmt(r.cashSubsidy)}</TableCell>
@@ -82,6 +84,7 @@ export function SalaryTable({ results }: SalaryTableProps) {
               <TableCell className="text-right font-mono text-sm bg-blue-50/50">{fmt(sum('grossSalary'))}</TableCell>
               <TableCell className="text-right font-mono text-sm text-purple-600">{fmt(sum('specialDeductionTotal'))}</TableCell>
               <TableCell className="text-right font-mono text-sm text-red-600">{fmt(sum('personalSocialTotal'))}</TableCell>
+              <TableCell className="text-right font-mono text-sm text-orange-600">{fmt(sum('personalHousingFund'))}</TableCell>
               <TableCell className="text-right font-mono text-sm text-amber-600">{fmt(sum('tax'))}</TableCell>
               <TableCell className="text-right font-mono text-sm bg-emerald-50/50">{fmt(sum('netSalary'))}</TableCell>
               <TableCell className="text-right font-mono text-sm text-emerald-600">{fmt(sum('cashSubsidy'))}</TableCell>

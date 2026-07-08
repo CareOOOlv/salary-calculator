@@ -5,20 +5,21 @@ import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
-import { User, Banknote, Gift, X } from 'lucide-react'
+import { User, Banknote, Gift, Home, X } from 'lucide-react'
 import { fmt } from '@/calc'
-import { DEDUCTION_ITEMS, INCOME_FIELDS } from '@/constants'
+import { DEDUCTION_ITEMS, INCOME_FIELDS, HOUSING_FUND_RATE_OPTIONS } from '@/constants'
 import type { EmployeeInput, EmployeeResult } from '@/types'
 
 interface EmployeeCardProps {
   input: EmployeeInput
   result: EmployeeResult
   onUpdate: (field: keyof EmployeeInput, value: string) => void
+  onUpdateHousingFund: (field: 'enableHousingFund' | 'housingFundSameAsSocial' | 'housingFundBase' | 'housingFundRate', value: string) => void
   onToggleDeduction: (itemKey: string) => void
   onRemove: () => void
 }
 
-export function EmployeeCard({ input, result, onUpdate, onToggleDeduction, onRemove }: EmployeeCardProps) {
+export function EmployeeCard({ input, result, onUpdate, onUpdateHousingFund, onToggleDeduction, onRemove }: EmployeeCardProps) {
   return (
     <Card className="shadow-md border-slate-200">
       <CardHeader className="pb-3 pt-4 px-5">
@@ -96,6 +97,57 @@ export function EmployeeCard({ input, result, onUpdate, onToggleDeduction, onRem
 
         <Separator />
 
+        {/* 公积金 */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Home className="w-4 h-4 text-orange-600" />
+            <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">住房公积金</Label>
+            <Checkbox
+              checked={!!input.enableHousingFund}
+              onCheckedChange={(checked) => onUpdateHousingFund('enableHousingFund', checked ? 'true' : '')}
+              className="h-4 w-4"
+            />
+          </div>
+          {input.enableHousingFund && (
+            <div className="space-y-2 pl-1">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  checked={!!input.housingFundSameAsSocial}
+                  onCheckedChange={(checked) => onUpdateHousingFund('housingFundSameAsSocial', checked ? 'true' : '')}
+                  className="h-4 w-4"
+                />
+                <Label className="text-xs text-slate-600 cursor-pointer">基数同社保基数</Label>
+              </div>
+              {!input.housingFundSameAsSocial && (
+                <div>
+                  <Label className="text-xs text-slate-500">公积金基数</Label>
+                  <Input
+                    type="number"
+                    value={input.housingFundBase}
+                    onChange={(e) => onUpdateHousingFund('housingFundBase', e.target.value)}
+                    className="h-8 text-sm font-mono mt-1"
+                    placeholder="0"
+                  />
+                </div>
+              )}
+              <div>
+                <Label className="text-xs text-slate-500">公积金比例（企业+个人同比例）</Label>
+                <select
+                  value={input.housingFundRate}
+                  onChange={(e) => onUpdateHousingFund('housingFundRate', e.target.value)}
+                  className="mt-1 h-8 w-full rounded-md border border-slate-200 bg-white px-2 text-sm font-mono focus:border-blue-300 focus:outline-none"
+                >
+                  {HOUSING_FUND_RATE_OPTIONS.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <Separator />
+
         {/* 专项附加扣除 */}
         <div className="space-y-2">
           <div className="flex items-center gap-2">
@@ -151,6 +203,12 @@ export function EmployeeCard({ input, result, onUpdate, onToggleDeduction, onRem
             <span className="text-slate-500">个人社保</span>
             <span className="font-mono text-red-600">-{fmt(result.personalSocialTotal)}</span>
           </div>
+          {result.personalHousingFund > 0 && (
+            <div className="flex justify-between text-sm">
+              <span className="text-slate-500">个人公积金</span>
+              <span className="font-mono text-orange-600">-{fmt(result.personalHousingFund)}</span>
+            </div>
+          )}
           <div className="flex justify-between text-sm">
             <span className="text-slate-500">个人所得税</span>
             <span className="font-mono text-amber-600">-{fmt(result.tax)}</span>

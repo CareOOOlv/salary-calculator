@@ -58,6 +58,18 @@ export default function App() {
     }))
   }
 
+  const updateHousingFund = (id: string, field: 'enableHousingFund' | 'housingFundSameAsSocial' | 'housingFundBase' | 'housingFundRate', value: string) => {
+    setEmployees(prev => prev.map(e => {
+      if (e.id !== id) return e
+      const newInput = { ...e.input, [field]: field === 'enableHousingFund' || field === 'housingFundSameAsSocial' ? value === 'true' : value }
+      // 如果勾选"同社保基数"，清空自定义基数
+      if (field === 'housingFundSameAsSocial' && value === 'true') {
+        newInput.housingFundBase = ''
+      }
+      return { ...e, input: newInput }
+    }))
+  }
+
   const resetAll = () => {
     setEmployees([{ id: genId(), input: getDefaultInput() }])
   }
@@ -78,7 +90,7 @@ export default function App() {
             </h1>
           </div>
           <p className="text-sm text-slate-500">
-            支持任意人数 · 不含公积金 · 可编辑姓名 · 自由增减员工
+            支持任意人数 · 可选公积金 · 可编辑姓名 · 自由增减员工
           </p>
         </div>
 
@@ -121,6 +133,7 @@ export default function App() {
               input={emp.input}
               result={results[idx]}
               onUpdate={(field, value) => updateInput(emp.id, field, value)}
+              onUpdateHousingFund={(field, value) => updateHousingFund(emp.id, field, value)}
               onToggleDeduction={(itemKey) => toggleDeductionItem(emp.id, itemKey)}
               onRemove={() => removeEmployee(emp.id)}
             />
@@ -152,8 +165,8 @@ export default function App() {
 
         {/* 底部说明 */}
         <div className="text-center text-xs text-slate-400 pb-4 space-y-1">
-          <p>费率标准：养老企业16%个人8% | 医疗含生育企业9.5%个人2% | 失业企业0.5%个人0.5% | 工伤企业0.2%</p>
-          <p>个税起征点5,000元/月 | 不含公积金 | 现金补贴不计入社保和个税 | 本工具仅供参考，以社保局和税务局实际核算为准</p>
+          <p>费率标准：养老企业16%个人8% | 医疗含生育企业9.5%个人2% | 失业企业0.5%个人0.5% | 工伤企业0.2% | 公积金可选5%-12%</p>
+          <p>个税起征点5,000元/月 | 公积金个人部分可抵扣个税 | 现金补贴不计入社保和个税 | 本工具仅供参考，以社保局和税务局实际核算为准</p>
         </div>
       </div>
     </div>

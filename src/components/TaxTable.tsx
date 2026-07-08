@@ -33,6 +33,7 @@ export function TaxTable({ results }: TaxTableProps) {
               <TableHead className="text-xs font-semibold text-right whitespace-nowrap">应发工资</TableHead>
               <TableHead className="text-xs font-semibold text-right whitespace-nowrap">减：起征点</TableHead>
               <TableHead className="text-xs font-semibold text-right whitespace-nowrap">减：个人社保</TableHead>
+              <TableHead className="text-xs font-semibold text-right whitespace-nowrap">减：个人公积金</TableHead>
               <TableHead className="text-xs font-semibold text-right whitespace-nowrap">减：专项扣除</TableHead>
               <TableHead className="text-xs font-semibold text-right whitespace-nowrap bg-amber-50">应纳税所得额</TableHead>
               <TableHead className="text-xs font-semibold text-right whitespace-nowrap">税率</TableHead>
@@ -47,6 +48,7 @@ export function TaxTable({ results }: TaxTableProps) {
                 <TableCell className="text-right font-mono text-sm">{fmt(r.grossSalary)}</TableCell>
                 <TableCell className="text-right font-mono text-sm text-slate-400">- {fmt(TAX_THRESHOLD)}</TableCell>
                 <TableCell className="text-right font-mono text-sm text-slate-400">- {fmt(r.personalSocialTotal)}</TableCell>
+                <TableCell className="text-right font-mono text-sm text-orange-500">{r.personalHousingFund > 0 ? `- ${fmt(r.personalHousingFund)}` : '-'}</TableCell>
                 <TableCell className="text-right font-mono text-sm text-purple-500">- {fmt(r.specialDeductionTotal)}</TableCell>
                 <TableCell className="text-right font-mono text-sm font-semibold bg-amber-50/50">{fmt(r.taxableIncome)}</TableCell>
                 <TableCell className="text-right font-mono text-sm">{(r.taxRate * 100).toFixed(0)}%</TableCell>
