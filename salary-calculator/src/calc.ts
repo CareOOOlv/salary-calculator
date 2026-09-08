@@ -1,5 +1,5 @@
-import { TAX_THRESHOLD, TAX_BRACKETS, ANNUAL_TAX_BRACKETS, DEDUCTION_ITEMS, getCompanyRates, getPersonalRates } from '@/constants'
-import type { EmployeeInput, EmployeeData, EmployeeResult, CumulativeResult } from '@/types'
+import { TAX_THRESHOLD, TAX_BRACKETS, DEDUCTION_ITEMS, getCompanyRates, getPersonalRates } from '@/constants'
+import type { EmployeeInput, EmployeeData, EmployeeResult } from '@/types'
 
 let _idCounter = 0
 export function genId() {
@@ -105,9 +105,7 @@ export function calcEmployee(data: EmployeeData, cityId: string): EmployeeResult
   const companyInjury = Math.round(socialBase * C_RATES.injury * 100) / 100
   const companySocialTotal = Math.round((companyPension + companyMedical + companyUnemployment + companyInjury) * 100) / 100
 
-  // 公积金比例：显式填 0 表示不缴（0 不再被兜底成 12%）；只有未填/非法时才默认 12%
-  const hfRateParsed = parseFloat(input.housingFundRate)
-  const housingFundRate = Number.isFinite(hfRateParsed) ? hfRateParsed / 100 : 0.12
+  const housingFundRate = parseFloat(input.housingFundRate) / 100 || 0.12
   const housingFundBase = input.enableHousingFund
     ? (input.housingFundSameAsSocial ? socialBase : (parseFloat(input.housingFundBase) || 0))
     : 0
@@ -123,7 +121,6 @@ export function calcEmployee(data: EmployeeData, cityId: string): EmployeeResult
   return {
     id: data.id,
     name: input.name || '未命名',
-    socialBase,
     baseSalary, positionAllowance, communication, transport, meal, performance, attendance, otherDeduction,
     sickLeaveDeduction, personalLeaveDeduction, leaveTotalDeduction,
     workDaysTotal, actualWorkDays: Math.max(0, actualWorkDays),
@@ -149,9 +146,7 @@ export function reverseCalcEmployee(data: EmployeeData, cityId: string): Employe
   const C_RATES = getCompanyRates(cityId)
   const P_RATES = getPersonalRates(cityId)
   const specialDeductionTotal = calcSpecialDeduction(input)
-  // 公积金比例：显式填 0 表示不缴（0 不再被兜底成 12%）；只有未填/非法时才默认 12%
-  const hfRateParsed = parseFloat(input.housingFundRate)
-  const housingFundRate = Number.isFinite(hfRateParsed) ? hfRateParsed / 100 : 0.12
+  const housingFundRate = parseFloat(input.housingFundRate) / 100 || 0.12
 
   // 用户填了就用用户的；没填就在迭代中自动跟随
   const userSocialBase = parseFloat(input.socialBase) || 0
@@ -222,7 +217,6 @@ export function reverseCalcEmployee(data: EmployeeData, cityId: string): Employe
   return {
     id: data.id,
     name: input.name || '未命名',
-    socialBase,
     baseSalary: gross, positionAllowance: 0, communication: 0, transport: 0, meal: 0, performance: 0, attendance: 0, otherDeduction: 0,
     sickLeaveDeduction: 0, personalLeaveDeduction: 0, leaveTotalDeduction: 0,
     workDaysTotal: 21.75, actualWorkDays: 21.75,
@@ -253,121 +247,4 @@ export function getDeductionAmount(input: EmployeeInput, key: string): number {
   if (!item) return 0
   if (key === 'seriousIllness') return parseFloat(input.seriousIllnessAmount) || 0
   return item.amount
-}
-
-// 年度综合所得税（累计预扣法）
-export function calcAnnualTax(taxableIncome: number): { tax: number; rate: number; deduction: number } {
-  if (taxableIncome <= 0) return { tax: 0, rate: 0, deduction: 0 }
-  for (const b of ANNUAL_TAX_BRACKETS) {
-    if (taxableIncome <= b.limit) {
-      return { tax: Math.max(0, taxableIncome * b.rate - b.deduction), rate: b.rate, deduction: b.deduction }
-    }
-  }
-  const last = ANNUAL_TAX_BRACKETS[ANNUAL_TAX_BRACKETS.length - 1]
-  return { tax: Math.max(0, taxableIncome * last.rate - last.deduction), rate: last.rate, deduction: last.deduction }
-}
-
-// 计算某月从指定日期到月末的实际工作日数（不含周末）
-function countWorkDaysFromDay(year: number, month: number, startDay: number): number {
-  const daysInMonth = new Date(year, month, 0).getDate()
-  let count = 0
-  for (let d = startDay; d <= daysInMonth; d++) {
-    const dow = new Date(year, month - 1, d).getDay()
-    if (dow !== 0 && dow !== 6) count++
-  }
-  return count
-}
-
-// 首月折算：入职当月按实际工作天数折算工资
-// 社保公积金不再因入职日自动跳过：默认正常缴纳，需要不缴时手动勾选"不缴纳社保"
-function adjustFirstMonthInput(inp: EmployeeInput, hireDay: number, hireMonth: string): EmployeeInput {
-  const [year, month] = hireMonth.split('-').map(Number)
-  const workDaysFromHire = countWorkDaysFromDay(year, month, hireDay)
-  const totalWorkDays = parseFloat(inp.workDaysTotal) || 21.75
-  const notWorkedDays = Math.max(0, totalWorkDays - workDaysFromHire)
-
-  const existingLeave = parseFloat(inp.personalLeaveDays) || 0
-
-  return {
-    ...inp,
-    personalLeaveDays: String(Math.round((existingLeave + notWorkedDays) * 100) / 100),
-  }
-}
-
-// 内部版：按月份序列计算单个员工某月的工资（累计预扣法）
-// monthInputs: 该员工从入职月到目标月的所有月度输入（按时间顺序）
-// staffId: 员工 ID（写入结果方便查找 STAFF 记录）
-// hireDay: 入职日（用于首月折算，选填）
-// hireMonth: 入职月 'YYYY-MM'（用于首月折算，选填）
-export function calcPayrollMonth(
-  monthInputs: EmployeeInput[],
-  cityId: string,
-  name: string,
-  staffId: string,
-  hireDay?: number,
-  hireMonth?: string,
-): CumulativeResult {
-  // 首月折算：入职当月按实际工作天数折算
-  const adjustedInputs = monthInputs.map((inp, idx) => {
-    if (idx === 0 && hireDay && hireMonth) {
-      return adjustFirstMonthInput(inp, hireDay, hireMonth)
-    }
-    return inp
-  })
-
-  const cur = calcEmployee({ id: staffId, input: adjustedInputs[adjustedInputs.length - 1] }, cityId)
-
-  // 累计到目标月
-  let cumulativeIncome = 0
-  let cumulativeSocial = 0
-  let cumulativeHousing = 0
-  let cumulativeSpecial = 0
-  for (const inp of adjustedInputs) {
-    const r = calcEmployee({ id: name, input: inp }, cityId)
-    cumulativeIncome += r.grossSalary - r.leaveTotalDeduction
-    cumulativeSocial += r.personalSocialTotal
-    cumulativeHousing += r.personalHousingFund
-    cumulativeSpecial += r.specialDeductionTotal
-  }
-  const monthsWorked = monthInputs.length
-  const cumulativeTaxable = Math.max(0,
-    cumulativeIncome
-    - TAX_THRESHOLD * monthsWorked   // 减除费用 5000×在职月数
-    - cumulativeSocial
-    - cumulativeHousing
-    - cumulativeSpecial
-  )
-  const cumulativeTax = calcAnnualTax(cumulativeTaxable).tax
-
-  // 累计到上一个月（用于算本月应补缴 = 累计应缴 - 上月累计已缴）
-  let priorTaxable = 0
-  let priorTax = 0
-  if (adjustedInputs.length > 1) {
-    let pIncome = 0, pSocial = 0, pHousing = 0, pSpecial = 0
-    for (const inp of adjustedInputs.slice(0, -1)) {
-      const r = calcEmployee({ id: name, input: inp }, cityId)
-      pIncome += r.grossSalary - r.leaveTotalDeduction
-      pSocial += r.personalSocialTotal
-      pHousing += r.personalHousingFund
-      pSpecial += r.specialDeductionTotal
-    }
-    priorTaxable = Math.max(0, pIncome - TAX_THRESHOLD * (monthsWorked - 1) - pSocial - pHousing - pSpecial)
-    priorTax = calcAnnualTax(priorTaxable).tax
-  }
-
-  const monthTax = Math.max(0, Math.round((cumulativeTax - priorTax) * 100) / 100)
-  const netSalary = Math.round((cur.grossSalary - cur.leaveTotalDeduction - cur.personalSocialTotal - cur.personalHousingFund - monthTax) * 100) / 100
-  const totalIncome = Math.round((netSalary + cur.cashSubsidy) * 100) / 100
-
-  return {
-    ...cur,
-    monthlyTax: monthTax,
-    tax: monthTax,
-    netSalary,
-    totalIncome,
-    cumulativeIncome: Math.round(cumulativeIncome * 100) / 100,
-    cumulativeTaxable: Math.round(cumulativeTaxable * 100) / 100,
-    cumulativeTax: Math.round(cumulativeTax * 100) / 100,
-    priorPaidTax: Math.round(priorTax * 100) / 100,
-  }
 }

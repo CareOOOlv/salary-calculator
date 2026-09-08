@@ -1,18 +1,17 @@
 import path from "path"
 import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
-import { ecomflareDataPlugin } from "./vite-server-plugin"
+import { viteSingleFile } from "vite-plugin-singlefile"
 
-// https://vite.dev/config/
 export default defineConfig({
-  base: '/salary-calculator/',
-  plugins: [react(), ecomflareDataPlugin()],
-  server: {
-    port: 5175,
-  },
+  base: './',
+  plugins: [react(), viteSingleFile()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+  },
+  build: {
+    outDir: 'dist-offline',
   },
 });

@@ -45,17 +45,6 @@ export const TAX_BRACKETS = [
   { limit: Infinity, rate: 0.45, deduction: 15160 },
 ]
 
-// 年度综合所得税率表（累计预扣法用）
-export const ANNUAL_TAX_BRACKETS = [
-  { limit: 36000, rate: 0.03, deduction: 0 },
-  { limit: 144000, rate: 0.10, deduction: 2520 },
-  { limit: 300000, rate: 0.20, deduction: 16920 },
-  { limit: 420000, rate: 0.25, deduction: 31920 },
-  { limit: 660000, rate: 0.30, deduction: 52920 },
-  { limit: 960000, rate: 0.35, deduction: 85920 },
-  { limit: Infinity, rate: 0.45, deduction: 181920 },
-]
-
 export const INCOME_FIELDS: [keyof import('@/types').EmployeeInput, string][] = [
   ['baseSalary', '基本工资'],
   ['positionAllowance', '岗位补贴'],

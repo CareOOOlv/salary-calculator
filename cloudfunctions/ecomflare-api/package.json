@@ -1,0 +1,9 @@
+{
+  "name": "ecomflare-api",
+  "version": "1.0.0",
+  "description": "EcomFlare data API proxy",
+  "main": "index.js",
+  "dependencies": {
+    "@cloudbase/node-sdk": "latest"
+  }
+}

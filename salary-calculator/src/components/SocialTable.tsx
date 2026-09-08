@@ -61,7 +61,7 @@ export function SocialTable({ results, employees, city }: SocialTableProps) {
               return (
                 <TableRow key={r.id}>
                   <TableCell className="font-semibold text-sm sticky-col bg-white">{r.name}</TableCell>
-                  <TableCell className="text-right font-mono text-sm">{fmt(r.socialBase)}</TableCell>
+                  <TableCell className="text-right font-mono text-sm">{fmt(parseFloat(employees[i].input.socialBase) || 0)}</TableCell>
                   <TableCell className="text-right font-mono text-sm">{fmt(r.companyPension)}</TableCell>
                   <TableCell className="text-right font-mono text-sm">{fmt(r.companyMedical)}</TableCell>
                   <TableCell className="text-right font-mono text-sm">{fmt(r.companyUnemployment)}</TableCell>
@@ -79,7 +79,7 @@ export function SocialTable({ results, employees, city }: SocialTableProps) {
             })}
             <TableRow className="bg-slate-100 font-bold">
               <TableCell className="text-sm sticky-col bg-slate-100">合计</TableCell>
-              <TableCell className="text-right font-mono text-sm">{fmt(sum('socialBase'))}</TableCell>
+              <TableCell className="text-right font-mono text-sm">{fmt(results.reduce((s, _r, i) => s + (parseFloat(employees[i].input.socialBase) || 0), 0))}</TableCell>
               <TableCell className="text-right font-mono text-sm">{fmt(sum('companyPension'))}</TableCell>
               <TableCell className="text-right font-mono text-sm">{fmt(sum('companyMedical'))}</TableCell>
               <TableCell className="text-right font-mono text-sm">{fmt(sum('companyUnemployment'))}</TableCell>

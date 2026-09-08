@@ -1,10 +1,10 @@
 import * as XLSX from 'xlsx'
 import { fmtRaw, getDeductionAmount } from '@/calc'
 import { TAX_THRESHOLD } from '@/constants'
-import type { EmployeeData, CumulativeResult } from '@/types'
+import type { EmployeeResult, EmployeeData } from '@/types'
 import type { CityConfig } from '@/data/cityData'
 
-export function exportExcel(results: CumulativeResult[], yearMonth: string, employees: EmployeeData[], city: CityConfig) {
+export function exportExcel(results: EmployeeResult[], yearMonth: string, employees: EmployeeData[], city: CityConfig) {
   const wb = XLSX.utils.book_new()
   const wsData: any[][] = []
   const n = results.length
@@ -31,18 +31,14 @@ export function exportExcel(results: CumulativeResult[], yearMonth: string, empl
   ])
 
   // 数据行
-  // 应发工资按实际折算口径：grossSalary - 考勤扣款（病假/事假/首月未入职天数折算）
-  // 折算扣款并入"其他扣款"列，保证 基本+补贴+绩效-扣款 = 应发 账面自洽
   results.forEach((r, i) => {
-    const actualGross = r.grossSalary - r.leaveTotalDeduction
-    const otherDed = r.otherDeduction + r.leaveTotalDeduction
     wsData.push([
       i + 1, r.name, fmtRaw(r.baseSalary), fmtRaw(r.positionAllowance), fmtRaw(r.communication),
       fmtRaw(r.transport), fmtRaw(r.meal), fmtRaw(r.performance), fmtRaw(r.attendance),
-      fmtRaw(otherDed), fmtRaw(actualGross),
+      fmtRaw(r.otherDeduction), fmtRaw(r.grossSalary),
       fmtRaw(r.personalPension), fmtRaw(r.personalMedical), fmtRaw(r.personalUnemployment),
       0, fmtRaw(r.personalHousingFund), fmtRaw(r.personalSocialTotal + r.personalHousingFund),
-      fmtRaw(r.cumulativeIncome), TAX_THRESHOLD, fmtRaw(r.personalSocialTotal + r.personalHousingFund), fmtRaw(r.specialDeductionTotal), 0,
+      fmtRaw(r.grossSalary), TAX_THRESHOLD, fmtRaw(r.personalSocialTotal + r.personalHousingFund), fmtRaw(r.specialDeductionTotal), 0,
       fmtRaw(r.taxableIncome), r.taxRate, fmtRaw(r.quickDeduction), fmtRaw(r.tax),
       0, fmtRaw(r.monthlyTax),
       fmtRaw(r.netSalary), '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''
@@ -51,16 +47,14 @@ export function exportExcel(results: CumulativeResult[], yearMonth: string, empl
 
   const CR = city.companyRates
   const PR = city.personalRates
-  const sum = (key: keyof CumulativeResult) => results.reduce((s, r) => s + (r[key] as number), 0)
-  const sumOtherDed = sum('otherDeduction') + sum('leaveTotalDeduction')
-  const sumActualGross = sum('grossSalary') - sum('leaveTotalDeduction')
+  const sum = (key: keyof EmployeeResult) => results.reduce((s, r) => s + (r[key] as number), 0)
   wsData.push([
     '合计', '', fmtRaw(sum('baseSalary')), fmtRaw(sum('positionAllowance')), fmtRaw(sum('communication')),
     fmtRaw(sum('transport')), fmtRaw(sum('meal')), fmtRaw(sum('performance')), fmtRaw(sum('attendance')),
-    fmtRaw(sumOtherDed), fmtRaw(sumActualGross),
+    fmtRaw(sum('otherDeduction')), fmtRaw(sum('grossSalary')),
     fmtRaw(sum('personalPension')), fmtRaw(sum('personalMedical')), fmtRaw(sum('personalUnemployment')),
     0, fmtRaw(sum('personalHousingFund')), fmtRaw(sum('personalSocialTotal') + sum('personalHousingFund')),
-    fmtRaw(sum('cumulativeIncome')), TAX_THRESHOLD * n, fmtRaw(sum('personalSocialTotal') + sum('personalHousingFund')), fmtRaw(sum('specialDeductionTotal')), 0,
+    fmtRaw(sum('grossSalary')), TAX_THRESHOLD * n, fmtRaw(sum('personalSocialTotal') + sum('personalHousingFund')), fmtRaw(sum('specialDeductionTotal')), 0,
     fmtRaw(sum('taxableIncome')), '', 0, fmtRaw(sum('tax')),
     0, fmtRaw(sum('monthlyTax')),
     fmtRaw(sum('netSalary')), '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''
@@ -126,47 +120,47 @@ export function exportExcel(results: CumulativeResult[], yearMonth: string, empl
   ])
 
   // 社保公积金缴费明细
-  // 列布局（c0-c14，与数据行严格对齐）：
-  //   c0 序号 | c1 姓名 | c2 社保基数 | c3-c6 企业四险 | c7 企业社保合计 | c8 企业公积金
-  //   c9-c11 个人三险 | c12 个人社保合计 | c13 个人公积金 | c14 企业+个人合计
   const socStart = dedStart + n + 7
   wsData.push([])
   wsData.push([])
-  wsData.push([`${yearMonth}社保公积金缴费明细`])
+  wsData.push([`${yearMonth}社保公积金缴费明细`, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''])
   wsData.push([
     '序号', '姓名', '社保基数',
-    '企业部分', '', '', '',
+    '企业部分', '', '', '', '',
     '企业社保合计', '企业公积金',
-    '个人部分', '', '',
+    '个人部分', '', '', '',
     '个人社保合计', '个人公积金',
     '企业+个人合计',
+    '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''
   ])
   wsData.push([
     '', '', '',
-    '养老保险', '医疗保险', '失业保险', '工伤保险',
+    '养老保险', '医疗保险', '失业保险', '工伤保险', '',
     '', '',
-    '养老保险', '医疗保险', '失业保险',
+    '养老保险', '医疗保险', '失业保险', '',
     '', '',
     '',
+    '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''
   ])
   wsData.push([
     '', '', '',
-    CR.pension, CR.medical, CR.unemployment, CR.injury,
+    CR.pension, CR.medical, CR.unemployment, CR.injury, '',
     '', '',
-    PR.pension, PR.medical, PR.unemployment,
+    PR.pension, PR.medical, PR.unemployment, '',
     '', '',
     '',
+    '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''
   ])
 
   results.forEach((r, i) => {
-    // 基数用实际计算值：勾选"不缴纳社保"时为 0，与金额 0 保持一致
     wsData.push([
-      i + 1, r.name, fmtRaw(r.socialBase),
+      i + 1, r.name, fmtRaw(parseFloat(employees[i].input.socialBase) || 0),
       fmtRaw(r.companyPension), fmtRaw(r.companyMedical), fmtRaw(r.companyUnemployment), fmtRaw(r.companyInjury),
       fmtRaw(r.companySocialTotal), fmtRaw(r.companyHousingFund),
       fmtRaw(r.personalPension), fmtRaw(r.personalMedical), fmtRaw(r.personalUnemployment),
       fmtRaw(r.personalSocialTotal), fmtRaw(r.personalHousingFund),
       fmtRaw(r.companySocialTotal + r.companyHousingFund + r.personalSocialTotal + r.personalHousingFund),
+      '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''
     ])
   })
 
@@ -198,17 +192,17 @@ export function exportExcel(results: CumulativeResult[], yearMonth: string, empl
     { s: { r: dedStart + 1, c: 22 }, e: { r: dedStart + 1, c: 26 } },
     { s: { r: dedStart + 1, c: 27 }, e: { r: dedStart + 1, c: 31 } },
     { s: { r: dedStart + 1, c: 32 }, e: { r: dedStart + 2, c: 36 } },
-    { s: { r: socStart, c: 0 }, e: { r: socStart, c: 14 } },
+    { s: { r: socStart, c: 0 }, e: { r: socStart, c: 36 } },
     { s: { r: socStart + 1, c: 0 }, e: { r: socStart + 3, c: 0 } },
     { s: { r: socStart + 1, c: 1 }, e: { r: socStart + 3, c: 1 } },
     { s: { r: socStart + 1, c: 2 }, e: { r: socStart + 3, c: 2 } },
-    { s: { r: socStart + 1, c: 3 }, e: { r: socStart + 1, c: 6 } },  // 企业部分
-    { s: { r: socStart + 1, c: 7 }, e: { r: socStart + 3, c: 7 } },  // 企业社保合计
-    { s: { r: socStart + 1, c: 8 }, e: { r: socStart + 3, c: 8 } },  // 企业公积金
-    { s: { r: socStart + 1, c: 9 }, e: { r: socStart + 1, c: 11 } }, // 个人部分
-    { s: { r: socStart + 1, c: 12 }, e: { r: socStart + 3, c: 12 } }, // 个人社保合计
-    { s: { r: socStart + 1, c: 13 }, e: { r: socStart + 3, c: 13 } }, // 个人公积金
-    { s: { r: socStart + 1, c: 14 }, e: { r: socStart + 3, c: 14 } }, // 企业+个人合计
+    { s: { r: socStart + 1, c: 3 }, e: { r: socStart + 1, c: 7 } },  // 企业部分合并
+    { s: { r: socStart + 1, c: 8 }, e: { r: socStart + 3, c: 8 } },  // 企业社保合计
+    { s: { r: socStart + 1, c: 9 }, e: { r: socStart + 3, c: 9 } },  // 企业公积金
+    { s: { r: socStart + 1, c: 10 }, e: { r: socStart + 1, c: 13 } }, // 个人部分合并
+    { s: { r: socStart + 1, c: 14 }, e: { r: socStart + 3, c: 14 } }, // 个人社保合计
+    { s: { r: socStart + 1, c: 15 }, e: { r: socStart + 3, c: 15 } }, // 个人公积金
+    { s: { r: socStart + 1, c: 16 }, e: { r: socStart + 3, c: 16 } }, // 企业+个人合计
   ]
 
   const colWidths: { [key: number]: number } = {

@@ -41,24 +41,6 @@ export interface EmployeeData {
   input: EmployeeInput
 }
 
-// 内部版：某员工某月的薪酬录入（与 EmployeeInput 相同，按员工id+月份存储）
-export interface MonthRecord {
-  [empId: string]: EmployeeInput
-}
-
-// 全部月份数据：{ '2026-05': { chen: {...}, li: {...} } }
-export interface PayrollData {
-  [yearMonth: string]: MonthRecord
-}
-
-// 累计预扣结果
-export interface CumulativeResult extends EmployeeResult {
-  cumulativeIncome: number        // 累计收入（截止当月）
-  cumulativeTaxable: number       // 累计应纳税所得额
-  cumulativeTax: number           // 累计应缴个税
-  priorPaidTax: number            // 之前月份已缴个税
-}
-
 // 批量计算模式的一行
 export interface BatchRow {
   id: string
@@ -73,7 +55,6 @@ export interface BatchRow {
 export interface EmployeeResult {
   id: string
   name: string
-  socialBase: number             // 实际用于计算的社保基数（skipSocial 时为 0）
   baseSalary: number
   positionAllowance: number
   communication: number
