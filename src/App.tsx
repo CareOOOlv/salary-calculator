@@ -3,8 +3,8 @@ import * as React from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { Calendar, Download, Building2, LayoutDashboard, Users, Wallet, Briefcase, TrendingUp, Upload, Save, HardDrive, Globe, Cloud } from 'lucide-react'
-import { getDefaultInput, calcPayrollMonth } from '@/calc'
+import { Calendar, Download, Upload, Save, Globe, Cloud } from 'lucide-react'
+import { calcPayrollMonth } from '@/calc'
 import { readCloudData, writeCloudData, flushCloudData } from '@/lib/cloudbase'
 import { exportExcel } from '@/export'
 import { getCityConfig } from '@/constants'
@@ -17,7 +17,8 @@ import { AdminHub } from '@/components/AdminHub'
 import { ReimbursementTool } from '@/components/ReimbursementTool'
 import { FinanceHub } from '@/components/FinanceHub'
 import { FinanceDashboard } from '@/components/FinanceDashboard'
-import { STAFF, COMPANY_START_MONTH, COMPANY_CITY, getMonthList, getDefaultProfile, getInitialChanges, replayProfile, profileToInput } from '@/staff'
+import { TestAccountLedger } from '@/components/TestAccountLedger'
+import { STAFF, COMPANY_CITY, getMonthList, getDefaultProfile, getInitialChanges, replayProfile, profileToInput, isStaffActiveInMonth } from '@/staff'
 import type { EmployeeData, EmployeeInput, PayrollData, CumulativeResult } from '@/types'
 import type { StaffProfile, PersonnelChange } from '@/staff'
 
@@ -48,10 +49,12 @@ function loadJSON<T>(key: string, fallback: T): T {
   }
 }
 
-type TabKey = 'workbench' | 'hr-hub' | 'personnel' | 'payroll' | 'admin-hub' | 'reimbursement' | 'finance-hub' | 'finance' | 'revenue' | 'admin'
+type TabKey = 'workbench' | 'hr-hub' | 'personnel' | 'payroll' | 'admin-hub' | 'reimbursement' | 'finance-hub' | 'finance' | 'finance-test-accounts' | 'revenue' | 'admin'
 
 export default function App() {
   const [tab, setTab] = useState<TabKey>('workbench')
+  // 子模块的 onNavigate 签名是 (tab: string) => void；这里收窄为 TabKey 再落到 setTab
+  const navigate = useCallback((t: string) => setTab(t as TabKey), [])
   const [payrollData, setPayrollData] = useState<PayrollData>({})
   const [profiles, setProfiles] = useState<Record<string, StaffProfile>>({})
   const [changes, setChanges] = useState<PersonnelChange[]>([])
@@ -180,13 +183,14 @@ export default function App() {
     return replayProfile(changes, empId, month)
   }
 
-  // 某员工在某月是否在职（按回放后的入职时间判断）
+  // 某员工在某月是否在职（按回放后的入职/离职时间判断）
+  // 离职当月仍算在职（社保按自然月缴到离职当月），次月才停缴
   const isActive = (empId: string, month: string): boolean => {
     const p = effectiveProfile(empId, month)
-    return month >= p.hireDate
+    return isStaffActiveInMonth(p, month)
   }
 
-  // 当前月在职员工
+  // 当前月在职员工（已离职的不再参与工资与社保测算）
   const activeStaff = STAFF.filter(s => isActive(s.id, currentMonth))
 
   // 取某员工某月的输入：优先已录数据，否则用该月生效档案预填
@@ -246,7 +250,15 @@ export default function App() {
       const profile = effectiveProfile(staff.id, currentMonth)
       const months = monthRange(profile.hireDate, currentMonth)
       const inputs = months.map(m => getInput(staff.id, m))
-      return calcPayrollMonth(inputs, COMPANY_CITY, staff.name, staff.id, profile.hireDay, profile.hireDate)
+      return calcPayrollMonth(
+        inputs,
+        COMPANY_CITY,
+        staff.name,
+        staff.id,
+        profile.hireDay,
+        profile.hireDate,
+        profile.firstIncomeThisYear ? 'yearToDate' : 'tenure',
+      )
     })
   }, [activeStaff, currentMonth, payrollData, changes])
 
@@ -325,7 +337,7 @@ export default function App() {
   if (tab === 'workbench') {
     return (
       <ErrorBoundary>
-        <Workbench onNavigate={setTab} />
+        <Workbench onNavigate={navigate} />
       </ErrorBoundary>
     )
   }
@@ -333,7 +345,7 @@ export default function App() {
   if (tab === 'hr-hub') {
     return (
       <ErrorBoundary>
-        <HRHub onNavigate={setTab} />
+        <HRHub onNavigate={navigate} />
       </ErrorBoundary>
     )
   }
@@ -341,7 +353,7 @@ export default function App() {
   if (tab === 'admin-hub') {
     return (
       <ErrorBoundary>
-        <AdminHub onNavigate={setTab} />
+        <AdminHub onNavigate={navigate} />
       </ErrorBoundary>
     )
   }
@@ -349,7 +361,7 @@ export default function App() {
   if (tab === 'reimbursement') {
     return (
       <ErrorBoundary>
-        <ReimbursementTool onNavigate={setTab} />
+        <ReimbursementTool onNavigate={navigate} />
       </ErrorBoundary>
     )
   }
@@ -357,7 +369,7 @@ export default function App() {
   if (tab === 'finance-hub') {
     return (
       <ErrorBoundary>
-        <FinanceHub onNavigate={setTab} />
+        <FinanceHub onNavigate={navigate} />
       </ErrorBoundary>
     )
   }
@@ -365,7 +377,15 @@ export default function App() {
   if (tab === 'finance') {
     return (
       <ErrorBoundary>
-        <FinanceDashboard onNavigate={setTab} />
+        <FinanceDashboard onNavigate={navigate} />
+      </ErrorBoundary>
+    )
+  }
+
+  if (tab === 'finance-test-accounts') {
+    return (
+      <ErrorBoundary>
+        <TestAccountLedger onNavigate={navigate} />
       </ErrorBoundary>
     )
   }
@@ -443,10 +463,13 @@ export default function App() {
                   {STAFF.map(s => {
                     const active = isActive(s.id, currentMonth)
                     const p = effectiveProfile(s.id, currentMonth)
+                    const rm = p.resignDate ? p.resignDate.slice(0, 7) : undefined
+                    const resigned = Boolean(rm && currentMonth > rm)
                     return (
-                      <div key={s.id} className={`px-3 py-1.5 rounded-full text-xs border ${active ? 'bg-cyan-400/10 border-cyan-400/20 text-cyan-300' : 'bg-white/5 border-white/10 text-white/30'}`}>
+                      <div key={s.id} className={`px-3 py-1.5 rounded-full text-xs border ${active ? 'bg-cyan-400/10 border-cyan-400/20 text-cyan-300' : resigned ? 'bg-rose-400/8 border-rose-400/20 text-rose-300/60' : 'bg-white/5 border-white/10 text-white/30'}`}>
                         {s.name} · {p.hireDate.replace('-', '年')}月入职{p.hireDay ? `（${p.hireDay}日）` : ''}
-                        {!active && ' · 未入职'}
+                        {resigned && ` · ${rm!.replace('-', '年')}月已离职`}
+                        {!active && !resigned && ' · 未入职'}
                       </div>
                     )
                   })}
@@ -499,14 +522,19 @@ export default function App() {
                       </thead>
                       <tbody>
                         {results.map(r => {
-                          const staff = STAFF.find(s => s.id === r.id)
-                          const monthsCount = monthRange(effectiveProfile(r.id, currentMonth).hireDate, currentMonth).length
                           return (
                             <tr key={r.id} className="border-t border-white/8">
-                              <td className="px-3 py-2 font-medium text-white/90">{r.name}</td>
+                              <td className="px-3 py-2 font-medium text-white/90">
+                                {r.name}
+                                {r.deductionMode === 'yearToDate' && (
+                                  <span className="ml-1.5 text-[10px] px-1.5 py-px rounded-full bg-cyan-400/10 text-cyan-300/70 border border-cyan-400/20">
+                                    13号公告
+                                  </span>
+                                )}
+                              </td>
                               <td className="px-3 py-2 text-right font-mono text-white/70">{fmt(r.cumulativeIncome)}</td>
-                              <td className="px-3 py-2 text-right font-mono text-white/70">{fmt(5000 * monthsCount)}</td>
-                              <td className="px-3 py-2 text-right font-mono text-white/70">{fmt(r.cumulativeIncome - r.cumulativeTaxable - 5000 * monthsCount)}</td>
+                              <td className="px-3 py-2 text-right font-mono text-white/70">{fmt(5000 * r.cumulativeDeductionMonths)}</td>
+                              <td className="px-3 py-2 text-right font-mono text-white/70">{fmt(r.cumulativeIncome - r.cumulativeTaxable - 5000 * r.cumulativeDeductionMonths)}</td>
                               <td className="px-3 py-2 text-right font-mono text-white/70">{fmt(r.cumulativeTaxable)}</td>
                               <td className="px-3 py-2 text-right font-mono text-amber-400/80">{fmt(r.cumulativeTax)}</td>
                               <td className="px-3 py-2 text-right font-mono text-white/70">{fmt(r.priorPaidTax)}</td>
@@ -523,18 +551,17 @@ export default function App() {
           </>
         )}
 
-        {/* ============ 财务 / 收入 / 行政（占位） ============ */}
-        {(tab === 'finance' || tab === 'revenue' || tab === 'admin') && (
+        {/* ============ 收入 / 行政（占位） ============ */}
+        {(tab === 'revenue' || tab === 'admin') && (
           <Card className="shadow-lg border-white/10 bg-white/5 backdrop-blur-sm">
             <CardContent className="pt-10 pb-10 text-center">
-              <div className="text-4xl mb-3">{tab === 'finance' ? '📊' : tab === 'revenue' ? '📈' : '📋'}</div>
+              <div className="text-4xl mb-3">{tab === 'revenue' ? '📈' : '📋'}</div>
               <h3 className="font-bold text-lg text-white/80">{pageMeta[tab]?.title} · 待开发</h3>
               <p className="text-sm text-white/30 mt-2">先完善人事与工资社保模块，后续再讨论需求</p>
             </CardContent>
           </Card>
         )}
 
-        {tab !== 'workbench' && (
         <div className="rounded-xl border border-white/8 bg-white/3 backdrop-blur-sm px-5 py-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3">
@@ -598,7 +625,6 @@ export default function App() {
           </div>
           <p className="text-[10px] text-white/15 mt-2">本工具仅供内部参考，以社保局和税务局实际核算为准</p>
         </div>
-        )}
       </div>
     </div>
     </ErrorBoundary>

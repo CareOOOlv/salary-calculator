@@ -294,11 +294,38 @@ function adjustFirstMonthInput(inp: EmployeeInput, hireDay: number, hireMonth: s
   }
 }
 
+// ============ 累计减除费用月份基数口径 ============
+// 'tenure'：5000 × 在本单位任职受雇月份数（入职月起算）—— 61 号公告第六条默认口径
+// 'yearToDate'：5000 × 当年截至本月月份数（从 1 月 1 日起算）—— 仅适用于
+//   「一个纳税年度内首次取得工资、薪金所得」的居民个人（国家税务总局公告 2020 年第 13 号）
+export type DeductionMonthsMode = 'tenure' | 'yearToDate'
+
+/**
+ * 解析累计减除费用的月份基数。
+ * @param mode 口径开关
+ * @param hireMonth 入职月'YYYY-MM'
+ * @param monthsWorked 从入职月到当前计算月实际参与的月份数
+ */
+export function resolveDeductionMonths(
+  mode: DeductionMonthsMode,
+  hireMonth: string | undefined,
+  monthsWorked: number,
+): number {
+  if (mode !== 'yearToDate' || !hireMonth) return monthsWorked
+  const [y, m] = hireMonth.split('-').map(Number)
+  if (!y || !m) return monthsWorked
+  // 当年截至本月 = 本月的自然月序号（1 月 = 1，8 月 = 8）
+  const targetMonth = m + monthsWorked - 1
+  const base = targetMonth > 12 ? targetMonth - 12 : targetMonth
+  return Math.min(12, Math.max(monthsWorked, base))
+}
+
 // 内部版：按月份序列计算单个员工某月的工资（累计预扣法）
 // monthInputs: 该员工从入职月到目标月的所有月度输入（按时间顺序）
 // staffId: 员工 ID（写入结果方便查找 STAFF 记录）
 // hireDay: 入职日（用于首月折算，选填）
-// hireMonth: 入职月 'YYYY-MM'（用于首月折算，选填）
+// hireMonth: 入职月'YYYY-MM'（用于首月折算，选填）
+// deductionBaseMonths: 累计减除费用的月份基数口径（见下方 resolveDeductionMonths）
 export function calcPayrollMonth(
   monthInputs: EmployeeInput[],
   cityId: string,
@@ -306,6 +333,7 @@ export function calcPayrollMonth(
   staffId: string,
   hireDay?: number,
   hireMonth?: string,
+  deductionMonthsMode: DeductionMonthsMode = 'tenure',
 ): CumulativeResult {
   // 首月折算：入职当月按实际工作天数折算
   const adjustedInputs = monthInputs.map((inp, idx) => {
@@ -329,10 +357,12 @@ export function calcPayrollMonth(
     cumulativeHousing += r.personalHousingFund
     cumulativeSpecial += r.specialDeductionTotal
   }
-  const monthsWorked = monthInputs.length
+
+  // 累计减除费用口径（见resolveDeductionMonths）：返回截至 currentMonth 的月数
+  const deductionMonths = resolveDeductionMonths(deductionMonthsMode, hireMonth, monthInputs.length)
   const cumulativeTaxable = Math.max(0,
     cumulativeIncome
-    - TAX_THRESHOLD * monthsWorked   // 减除费用 5000×在职月数
+    - TAX_THRESHOLD * deductionMonths   // 减除费用 5000 × 月数
     - cumulativeSocial
     - cumulativeHousing
     - cumulativeSpecial
@@ -351,7 +381,8 @@ export function calcPayrollMonth(
       pHousing += r.personalHousingFund
       pSpecial += r.specialDeductionTotal
     }
-    priorTaxable = Math.max(0, pIncome - TAX_THRESHOLD * (monthsWorked - 1) - pSocial - pHousing - pSpecial)
+    const priorDeductionMonths = resolveDeductionMonths(deductionMonthsMode, hireMonth, adjustedInputs.length - 1)
+    priorTaxable = Math.max(0, pIncome - TAX_THRESHOLD * priorDeductionMonths - pSocial - pHousing - pSpecial)
     priorTax = calcAnnualTax(priorTaxable).tax
   }
 
@@ -366,6 +397,8 @@ export function calcPayrollMonth(
     netSalary,
     totalIncome,
     cumulativeIncome: Math.round(cumulativeIncome * 100) / 100,
+    cumulativeDeductionMonths: deductionMonths,
+    deductionMode: deductionMonthsMode,
     cumulativeTaxable: Math.round(cumulativeTaxable * 100) / 100,
     cumulativeTax: Math.round(cumulativeTax * 100) / 100,
     priorPaidTax: Math.round(priorTax * 100) / 100,

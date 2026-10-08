@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { Users, Wallet, Receipt, Landmark, ChevronRight, Zap } from 'lucide-react'
+import { Users, Wallet, ChevronRight, Zap } from 'lucide-react'
 
 interface WorkbenchProps {
   onNavigate: (tab: string) => void

@@ -1,4 +1,4 @@
-import { ArrowLeft, ChevronRight, TrendingUp, BarChart3, PieChart, FileSpreadsheet, Upload } from 'lucide-react'
+import { ArrowLeft, ChevronRight, TrendingUp, BarChart3, PieChart, FlaskConical } from 'lucide-react'
 
 interface FinanceHubProps {
   onNavigate: (tab: string) => void
@@ -12,6 +12,15 @@ const modules = [
     desc: '上传月度 Excel 对账单 · 自动解析收支 · 概览看板 · 类目分析 · 月度趋势',
     color: 'purple',
     tags: ['Excel 导入', '收支分析', '看板'],
+    enabled: true,
+  },
+  {
+    key: 'finance-test-accounts',
+    icon: FlaskConical,
+    title: '测试账号台账',
+    desc: '录入测试账号与积分发放 · 自动记录时间 · 按账号/归属筛选 · 累计统计',
+    color: 'cyan',
+    tags: ['积分发放', '筛选统计'],
     enabled: true,
   },
   {
@@ -69,6 +78,7 @@ export function FinanceHub({ onNavigate }: FinanceHubProps) {
               purple: { border: 'border-purple-400/25', bg: 'linear-gradient(135deg, rgba(168,85,247,0.08) 0%, rgba(13,25,55,0.6) 100%)', glow: 'rgba(168,85,247,0.06)', text: 'text-purple-400/80', badge: 'bg-purple-400/10 border-purple-400/20 text-purple-400/60' },
               rose: { border: 'border-rose-400/25', bg: 'linear-gradient(135deg, rgba(251,113,133,0.08) 0%, rgba(13,25,55,0.6) 100%)', glow: 'rgba(251,113,133,0.06)', text: 'text-rose-400/80', badge: 'bg-rose-400/10 border-rose-400/20 text-rose-400/60' },
               emerald: { border: 'border-emerald-400/25', bg: 'linear-gradient(135deg, rgba(52,211,153,0.08) 0%, rgba(13,25,55,0.6) 100%)', glow: 'rgba(52,211,153,0.06)', text: 'text-emerald-400/80', badge: 'bg-emerald-400/10 border-emerald-400/20 text-emerald-400/60' },
+              cyan: { border: 'border-cyan-400/25', bg: 'linear-gradient(135deg, rgba(34,211,238,0.08) 0%, rgba(13,25,55,0.6) 100%)', glow: 'rgba(34,211,238,0.06)', text: 'text-cyan-400/80', badge: 'bg-cyan-400/10 border-cyan-400/20 text-cyan-400/60' },
             }
             const c = colorMap[mod.color]
 

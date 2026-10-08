@@ -334,18 +334,24 @@ export function FinanceDashboard({ onNavigate }: FinanceDashboardProps) {
           return
         }
 
+        // 去重：同日期+同类目+同金额+同摘要的跳过
+        const keyOf = (r: { date: string; category: string; income: number; expense: number; description: string }) =>
+          `${r.date}|${r.category}|${r.income}|${r.expense}|${r.description}`
+        let addedCount = 0
+        let skippedCount = 0
+
         setRecords(prev => {
-          // 去重：同日期+同类目+同金额+同摘要的跳过
-          const existing = new Set(
-            prev.map(r => `${r.date}|${r.category}|${r.income}|${r.expense}|${r.description}`)
-          )
-          const toAdd = newRecords.filter(
-            r => !existing.has(`${r.date}|${r.category}|${r.income}|${r.expense}|${r.description}`)
-          )
+          const existing = new Set(prev.map(keyOf))
+          const toAdd = newRecords.filter(r => !existing.has(keyOf(r)))
+          addedCount = toAdd.length
+          skippedCount = newRecords.length - toAdd.length
           return [...prev, ...toAdd]
         })
 
-        alert(`成功导入 ${newRecords.length} 条记录${newRecords.length !== newRecords.filter(r => true).length ? '' : ''}`)
+        alert(
+          `成功导入 ${addedCount} 条记录` +
+          (skippedCount > 0 ? `，跳过 ${skippedCount} 条重复记录` : '')
+        )
       } catch (err) {
         console.error(err)
         alert('Excel 解析失败，请检查文件格式')

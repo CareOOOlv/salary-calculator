@@ -11,7 +11,6 @@
  * 部署域名: careooolv-d8gnyhzsnfe9e7356-1438923118.tcloudbaseapp.com (已在安全域名白名单)
  */
 
-// @ts-expect-error - CloudBase SDK 没有完整的类型导出
 import cloudbase from '@cloudbase/js-sdk'
 
 const ENV_ID = 'careooolv-d8gnyhzsnfe9e7356'

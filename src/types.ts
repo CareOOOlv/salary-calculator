@@ -1,3 +1,5 @@
+import type { DeductionMonthsMode } from '@/calc'
+
 // 专项附加扣除配置
 export interface DeductionItemConfig {
   key: string
@@ -54,6 +56,8 @@ export interface PayrollData {
 // 累计预扣结果
 export interface CumulativeResult extends EmployeeResult {
   cumulativeIncome: number        // 累计收入（截止当月）
+  cumulativeDeductionMonths: number // 累计减除费用月数（5000×该月数=减除费用）
+  deductionMode: DeductionMonthsMode // 减除费用月份基数口径
   cumulativeTaxable: number       // 累计应纳税所得额
   cumulativeTax: number           // 累计应缴个税
   priorPaidTax: number            // 之前月份已缴个税

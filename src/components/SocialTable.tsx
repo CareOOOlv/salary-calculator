@@ -12,13 +12,14 @@ import { fmt } from '@/calc'
 import type { EmployeeResult, EmployeeData } from '@/types'
 import type { CityConfig } from '@/data/cityData'
 
+// employees 保留在 props 中以兼容既有调用方（当前表格数据全部来自 results）
 interface SocialTableProps {
   results: EmployeeResult[]
-  employees: EmployeeData[]
+  employees?: EmployeeData[]
   city: CityConfig
 }
 
-export function SocialTable({ results, employees, city }: SocialTableProps) {
+export function SocialTable({ results, city }: SocialTableProps) {
   const sum = (key: keyof EmployeeResult) => results.reduce((s, r) => s + (r[key] as number), 0)
 
   const hasAnyHousingFund = results.some(r => r.personalHousingFund > 0)
@@ -55,7 +56,7 @@ export function SocialTable({ results, employees, city }: SocialTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {results.map((r, i) => {
+            {results.map(r => {
               const totalCompanyCost = r.companySocialTotal + r.companyHousingFund
               const totalPersonalCost = r.personalSocialTotal + r.personalHousingFund
               return (

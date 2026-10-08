@@ -1,4 +1,4 @@
-import { ArrowLeft, ChevronRight, ReceiptText, FileText, ClipboardPen, PackageOpen, ClipboardList, Users2, Accessibility, Car, Megaphone } from 'lucide-react'
+import { ArrowLeft, ChevronRight, ReceiptText, FileText, ClipboardPen, PackageOpen, ClipboardList, Users2, Car, Megaphone } from 'lucide-react'
 
 interface AdminHubProps {
   onNavigate: (tab: string) => void
